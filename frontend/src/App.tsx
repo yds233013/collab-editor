@@ -1,23 +1,32 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { io } from 'socket.io-client';
 
-// adjust URL if your backend runs elsewhere
 const socket = io('http://localhost:4000');
 
 function App() {
+  const [text, setText] = useState('');
+
   useEffect(() => {
-    // send a ping on mount
-    socket.emit('ping');
-    // listen for the pong reply
-    socket.on('pong', () => {
-      console.log('🎉 received pong from server');
-    });
+    // When we first connect, load the current doc
+    socket.on('init-doc', (doc: string) => setText(doc));
+    // Whenever someone else edits, update our textarea
+    socket.on('doc-update', (newText: string) => setText(newText));
   }, []);
+
+  // Broadcast every keystroke
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setText(e.target.value);
+    socket.emit('doc-update', e.target.value);
+  };
 
   return (
     <div className="p-6">
       <h1 className="text-2xl font-bold mb-4">Collaborative Editor MVP</h1>
-      <p>Check your browser console for the “🎉 received pong” message.</p>
+      <textarea
+        className="w-full h-64 p-2 border rounded"
+        value={text}
+        onChange={handleChange}
+      />
     </div>
   );
 }
