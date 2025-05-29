@@ -1,26 +1,26 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React, { useEffect } from 'react';
+import { io } from 'socket.io-client';
+
+// adjust URL if your backend runs elsewhere
+const socket = io('http://localhost:4000');
 
 function App() {
+  useEffect(() => {
+    // send a ping on mount
+    socket.emit('ping');
+    // listen for the pong reply
+    socket.on('pong', () => {
+      console.log('🎉 received pong from server');
+    });
+  }, []);
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div className="p-6">
+      <h1 className="text-2xl font-bold mb-4">Collaborative Editor MVP</h1>
+      <p>Check your browser console for the “🎉 received pong” message.</p>
     </div>
   );
 }
 
 export default App;
+
