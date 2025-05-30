@@ -4,9 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-      "dev": "nodemon --watch src --exec ts-node src/index.ts",
-      "build": "tsc",
-      "start": "node dist/index.js"
+    "dev": "nodemon --watch src --exec ts-node src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js"
   },
   "keywords": [],
   "author": "",
@@ -15,6 +15,7 @@
   "dependencies": {
     "cors": "^2.8.5",
     "express": "^5.1.0",
+    "mongoose": "^8.15.1",
     "socket.io": "^4.8.1"
   },
   "devDependencies": {
