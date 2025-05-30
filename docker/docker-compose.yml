@@ -5,7 +5,21 @@ services:
     volumes:
       - mongo-data:/data/db
     ports:
-      - "27017:27017"
+      - '27017:27017'
+
+  backend:
+    build: ../backend
+    ports:
+      - '4000:4000'
+    depends_on:
+      - mongo
+
+  frontend:
+    build: ../frontend
+    ports:
+      - '3000:80'
+    depends_on:
+      - backend
 
 volumes:
   mongo-data:
