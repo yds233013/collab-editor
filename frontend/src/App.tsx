@@ -1,22 +1,38 @@
 import React, { useEffect, useState } from 'react';
 import { io } from 'socket.io-client';
+import Automerge from 'automerge';
 
 const socket = io('http://localhost:4000');
 
 function App() {
-  const [text, setText] = useState('');
+  // 1) CRDT state
+  const [doc, setDoc] = useState(Automerge.init<{ text: string }>());
 
+  // 2) On mount: receive full history + incremental changes
   useEffect(() => {
-    // When we first connect, load the current doc
-    socket.on('init-doc', (doc: string) => setText(doc));
-    // Whenever someone else edits, update our textarea
-    socket.on('doc-update', (newText: string) => setText(newText));
+    // a) initial sync
+    socket.on('init-doc', (changes: Uint8Array[]) => {
+      let d = Automerge.init<{ text: string }>();
+      [d] = Automerge.applyChanges(d, changes);
+      setDoc(d);
+    });
+    // b) incremental updates
+    socket.on('doc-update', (change: Uint8Array) => {
+      setDoc(current => Automerge.applyChanges(current, [change])[0]);
+    });
   }, []);
 
-  // Broadcast every keystroke
+  // 3) Handle local edits
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setText(e.target.value);
-    socket.emit('doc-update', e.target.value);
+    // a) apply change to our local CRDT
+    const next = Automerge.change(doc, d => {
+      d.text = e.target.value;
+    });
+    // b) extract the single change we just made
+    const [lastChange] = Automerge.getLastLocalChange(next)!;
+    // c) send it to the server & update our state
+    socket.emit('doc-update', lastChange);
+    setDoc(next);
   };
 
   return (
@@ -24,7 +40,7 @@ function App() {
       <h1 className="text-2xl font-bold mb-4">Collaborative Editor MVP</h1>
       <textarea
         className="w-full h-64 p-2 border rounded"
-        value={text}
+        value={doc.text}
         onChange={handleChange}
       />
     </div>
